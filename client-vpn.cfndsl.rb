@@ -38,6 +38,7 @@ CloudFormation do
 
   if route_to_internet
     EC2_ClientVpnRoute(:RouteToInternet) {
+      DependsOn :ClientVpnTargetNetworkAssociation
       Description 'Route to the internet'
       ClientVpnEndpointId Ref(:ClientVpnEndpoint)
       DestinationCidrBlock '0.0.0.0/0'
@@ -45,6 +46,7 @@ CloudFormation do
     }
 
     EC2_ClientVpnAuthorizationRule(:RouteToInternetAuthorizationRule) {
+      DependsOn :ClientVpnTargetNetworkAssociation
       Description 'Route to the internet'
       AuthorizeAllGroups true
       ClientVpnEndpointId Ref(:ClientVpnEndpoint)
