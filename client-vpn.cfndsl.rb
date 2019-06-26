@@ -1,5 +1,7 @@
 CloudFormation do
 
+  Condition('DnsSet', FnNot(FnEquals(Ref('DnsServers'), '')))
+
   Logs_LogGroup(:ClientVpnLogGroup) {
     LogGroupName FnSub("${EnvironmentName}-ClientVpn")
     RetentionInDays 30
@@ -20,8 +22,8 @@ CloudFormation do
       CloudwatchLogGroup: Ref(:ClientVpnLogGroup),
       Enabled: true
     })
-    # DnsServers([ "8.8.8.8" ])
     ServerCertificateArn Ref(:ServerCertificateArn)
+    DnsServers FnIf('DnsSet', FnSplit(',', Ref('DnsServers')), Ref('AWS::NoValue'))
     TagSpecifications([{
       ResourceType: "client-vpn-endpoint",
       Tags: [
