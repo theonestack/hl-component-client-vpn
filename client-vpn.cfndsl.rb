@@ -1,3 +1,5 @@
+require 'digest'
+
 CloudFormation do
 
   Condition('DnsSet', FnNot(FnEquals(Ref('DnsServers'), '')))
@@ -55,5 +57,23 @@ CloudFormation do
       TargetNetworkCidr '0.0.0.0/0'
     }
   end
+
+  routes.each do |route|
+    EC2_ClientVpnRoute("#{Digest::MD5.hexdigest(route['cidr'])}Route") {
+      DependsOn :ClientVpnTargetNetworkAssociation
+      Description route['desc']
+      ClientVpnEndpointId Ref(:ClientVpnEndpoint)
+      DestinationCidrBlock route['cidr']
+      TargetVpcSubnetId Ref(:AssociationSubnetId)
+    }
+
+    EC2_ClientVpnAuthorizationRule("#{Digest::MD5.hexdigest(route['cidr'])}Authorization") {
+      DependsOn :ClientVpnTargetNetworkAssociation
+      Description route['desc']
+      AuthorizeAllGroups true
+      ClientVpnEndpointId Ref(:ClientVpnEndpoint)
+      TargetNetworkCidr route['cidr']
+    }
+  end if defined? routes
 
 end

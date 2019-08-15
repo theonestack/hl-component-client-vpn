@@ -1,0 +1,12 @@
+test_metadata:
+  type: config
+  name: routes
+  description: test adding extra routes to the vpn connection
+
+routes:
+  -
+    desc: route to the dev environment over a vpc peer
+    cidr: 10.1.0.0/16
+  -
+    desc: route to the test environment over a vpc peer
+    cidr: 10.2.0.0/16
