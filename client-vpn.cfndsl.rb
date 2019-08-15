@@ -33,6 +33,7 @@ CloudFormation do
       ]
     }])
     TransportProtocol protocol
+    SplitTunnel split_tunnel
   }
 
   EC2_ClientVpnTargetNetworkAssociation(:ClientVpnTargetNetworkAssociation) {
