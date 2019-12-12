@@ -2,7 +2,7 @@ require 'digest'
 
 CloudFormation do
 
-  Condition('DnsSet', FnNot(FnEquals(Ref('DnsServers'), '')))
+  Condition(:DnsSet, FnNot(FnEquals(Ref(:DnsServers), '')))
 
   Logs_LogGroup(:ClientVpnLogGroup) {
     LogGroupName FnSub("${EnvironmentName}-ClientVpn")
@@ -25,15 +25,15 @@ CloudFormation do
       Enabled: true
     })
     ServerCertificateArn Ref(:ServerCertificateArn)
-    DnsServers FnIf('DnsSet', FnSplit(',', Ref('DnsServers')), Ref('AWS::NoValue'))
+    DnsServers FnIf(:DnsSet, FnSplit(',', Ref(:DnsServers)), Ref('AWS::NoValue'))
     TagSpecifications([{
       ResourceType: "client-vpn-endpoint",
       Tags: [
         { Key: 'Name', Value: FnSub("${EnvironmentName}") }
       ]
     }])
-    TransportProtocol protocol
-    SplitTunnel split_tunnel
+    TransportProtocol Ref(:Protocol)
+    SplitTunnel Ref(:SplitTunnel)
   }
 
   EC2_ClientVpnTargetNetworkAssociation(:ClientVpnTargetNetworkAssociation) {
@@ -41,23 +41,25 @@ CloudFormation do
     SubnetId Ref(:AssociationSubnetId)
   }
 
-  if route_to_internet
-    EC2_ClientVpnRoute(:RouteToInternet) {
-      DependsOn :ClientVpnTargetNetworkAssociation
-      Description 'Route to the internet'
-      ClientVpnEndpointId Ref(:ClientVpnEndpoint)
-      DestinationCidrBlock '0.0.0.0/0'
-      TargetVpcSubnetId Ref(:AssociationSubnetId)
-    }
+  Condition(:EnableRouteToInternet, FnEquals(Ref(:InternetRoute), 'true'))
 
-    EC2_ClientVpnAuthorizationRule(:RouteToInternetAuthorizationRule) {
-      DependsOn :ClientVpnTargetNetworkAssociation
-      Description 'Route to the internet'
-      AuthorizeAllGroups true
-      ClientVpnEndpointId Ref(:ClientVpnEndpoint)
-      TargetNetworkCidr '0.0.0.0/0'
-    }
-  end
+  EC2_ClientVpnRoute(:RouteToInternet) {
+    Condition :EnableRouteToInternet
+    DependsOn :ClientVpnTargetNetworkAssociation
+    Description 'Route to the internet'
+    ClientVpnEndpointId Ref(:ClientVpnEndpoint)
+    DestinationCidrBlock '0.0.0.0/0'
+    TargetVpcSubnetId Ref(:AssociationSubnetId)
+  }
+
+  EC2_ClientVpnAuthorizationRule(:RouteToInternetAuthorizationRule) {
+    Condition :EnableRouteToInternet
+    DependsOn :ClientVpnTargetNetworkAssociation
+    Description 'Route to the internet'
+    AuthorizeAllGroups true
+    ClientVpnEndpointId Ref(:ClientVpnEndpoint)
+    TargetNetworkCidr '0.0.0.0/0'
+  }
 
   routes.each do |route|
     EC2_ClientVpnRoute("#{Digest::MD5.hexdigest(route['cidr'])}Route") {

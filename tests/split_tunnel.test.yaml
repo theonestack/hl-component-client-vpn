@@ -1,7 +1,0 @@
-test_metadata:
-  type: config
-  name: split_tunnel
-  description: test the split tunnel config option
-
-route_to_internet: false
-split_tunnel: true
