@@ -61,6 +61,7 @@ CloudFormation do
     TargetNetworkCidr '0.0.0.0/0'
   }
 
+  routes = external_parameters.fetch(:routes, [])
   routes.each do |route|
     EC2_ClientVpnRoute("#{Digest::MD5.hexdigest(route['cidr'])}Route") {
       DependsOn :ClientVpnTargetNetworkAssociation
@@ -77,6 +78,6 @@ CloudFormation do
       ClientVpnEndpointId Ref(:ClientVpnEndpoint)
       TargetNetworkCidr route['cidr']
     }
-  end if defined? routes
+  end
 
 end
